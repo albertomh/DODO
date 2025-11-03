@@ -1,0 +1,13 @@
+{
+    "changelog-type": "default",
+    "extra-files": [
+        "digitalocean_deployment_orchestrator/__init__.py"
+    ],
+    "packages": {
+        ".": {}
+    },
+    "plugins": [
+        "sentence-case"
+    ],
+    "release-type": "python"
+}

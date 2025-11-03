@@ -1,0 +1,98 @@
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+[project]
+name = "digitalocean-deployment-orchestrator"
+version = "0.0.0"
+description = ""
+authors = [
+    {name = "Alberto Morón Hernández", email = "alberto.moronh@gmail.com"}
+]
+readme = "README.md"
+license-files = ["LICENSE"]
+requires-python = ">=3.14"
+dependencies = [
+    "ipython>=9.6.0,<10.0.0",
+    "structlog>=25.4.0,<26.0.0",
+]
+
+[dependency-groups]
+test = [
+    "coverage>=7.10.7,<8.0.0",
+    "pytest>=8.4.2,<9.0.0",
+    "pytest-randomly>=4.0.1,<5.0.0",
+    "pytest-xdist>=3.8.0,<4.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com"
+
+[tool.setuptools]
+packages = ["digitalocean_deployment_orchestrator"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-markers",
+    "--pdbcls=IPython.terminal.debugger:TerminalPdb",
+]
+markers = [
+    "integration",
+    "slow",
+    "smoke",
+    "unit",
+]
+
+[tool.coverage.report]
+omit = [
+    "*/__init__.py",
+    "noxfile.py",
+    "*/tests/*"
+]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "if settings.debug",
+]
+
+[tool.coverage.run]
+source = [
+    "./digitalocean_deployment_orchestrator/",
+]
+omit = [
+    "*/tests/*"
+]
+
+[tool.ruff]
+exclude = [".pdbrc"]
+indent-width = 4
+line-length = 90
+target-version = "py314"
+
+[tool.ruff.lint]
+ignore = []
+select = [
+    # flake8-bugbear
+    "B",
+    # pydocstyle
+    "E",
+    # isort
+    "I",
+    # flake8-no-pep420
+    "INP",
+    # Pyflakes
+    "F",
+    #flake8-logging-format
+    "G",
+    # flake8-logging
+    "LOG",
+    # flake8-bandit
+    "S",
+    # flake8-tidy-imports
+    "TID",
+    # flake8-print
+    "T20",
+    # pycodestyle warnings
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = ["S"]
