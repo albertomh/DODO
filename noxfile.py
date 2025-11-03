@@ -54,14 +54,11 @@ def tests_with_coverage(session: nox.Session) -> None:
     session.run("coverage", "erase")
     pytest_args = make_pytest_args(list(session.posargs))
     session.run(
-        "coverage",
-        "run",
-        # "--source", ".",
-        "-m",
         "pytest",
+        "--cov=digitalocean_deployment_orchestrator",
+        "--cov-report=term-missing",
+        "--cov-report=html",
         "tests/",
         *pytest_args,
         *session.posargs,
     )
-    session.run("coverage", "report")
-    session.run("coverage", "html")
