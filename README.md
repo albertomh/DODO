@@ -18,6 +18,24 @@ A Python package to
 - create said infrastructure
 - manage webapp blue/green deployments
 
+## Quickstart
+
+```sh
+# create a blueprint for a 'test' environment:
+cp infra/env_blueprints/_sample.py.txt infra/env_blueprints/test.py
+# edit the contents of the test.py blueprint ...
+
+uv venv
+uv pip install -e .
+export DIGITALOCEAN__TOKEN=dop_v1_123...
+uv run python -m DO_deploy.infra.apply test [--no-dry-run]
+
+# upload the deployment module to the newly created Droplet(s)
+uv run python -m DO_deploy.upload_deployment_script test admin
+# deploy the webapp following the blue/green strategy
+ssh admin@$dropletIP -t 'cd /etc/webapp/; uv run python -m DO_deploy.deploy.blue_green_deploy -u ghuser -t $GH_PAT -i ghuser/webapp:latest -n webapp'
+```
+
 ## Prerequisites
 
 To use `DODO` the following must be available locally:
@@ -193,6 +211,38 @@ pull-requests: write
 ```
 
 For more information, consult the [release-please-action project](https://github.com/googleapis/release-please-action).
+
+## Build & package
+
+DODO uses the hatchling build system and the `uv` toolchain to package releases. Build a
+release by:
+
+```sh
+# merge a release-please PR to create a tag and a GitHub Release
+
+# check out the tag locally
+
+# in this project's root directory
+uv build
+
+# upload the artefacts as an asset linked to the release
+# <https://github.com/albertomh/DODO/releases/tag/vM.m.p>
+```
+
+To use DODO as a dependency in a project:
+
+```sh
+# add the following line to the dependencies table in `pyproject.toml`:
+# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
+
+uv sync
+```
+
+Or simply run modules directly once installed as a dependency:
+
+```sh
+uv run python -m digitalocean_deployment_orchestrator.main
+```
 
 ---
 
