@@ -1,4 +1,4 @@
-# digitalocean_deployment_orchestrator
+# 🦤 DODO: Digital Ocean Deployment Orchestrator
 
 [![python 3.14](https://img.shields.io/badge/3.14-4584b6?logo=python&logoColor=ffde57)](https://docs.python.org/3.14/whatsnew/3.14.html)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&labelColor=261230&color=de60e9)](https://github.com/astral-sh/uv)
@@ -12,9 +12,15 @@
 [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![Release Please](https://img.shields.io/badge/📦_Release_Please-6C97BB)](https://github.com/googleapis/release-please)
 
+A Python package to
+
+- define infrastructure on Digital Ocean
+- create said infrastructure
+- manage webapp blue/green deployments
+
 ## Prerequisites
 
-To use `digitalocean_deployment_orchestrator` the following must be available locally:
+To use `DODO` the following must be available locally:
 
 - [Python 3.14](https://docs.python.org/3.14/) or above
 - [uv](https://docs.astral.sh/uv/)
@@ -38,13 +44,13 @@ uv run ipython
 
 ### pycliche
 
-`digitalocean_deployment_orchestrator` has been generated using the [pycliche](https://github.com/albertomh/pycliche)
+`DODO` has been generated using the [pycliche](https://github.com/albertomh/pycliche)
 project template.
 
-To update `digitalocean_deployment_orchestrator` to a newer version of `pycliche`:
+To update `DODO` to a newer version of `pycliche`:
 
 ```sh
-cd ~/Projects/digitalocean_deployment_orchestrator/
+cd ~/Projects/DODO/
 uvx copier update --skip-answered --trust [--vcs-ref=<TAG>]
 ```
 
@@ -60,7 +66,7 @@ This repo follows trunk-based development. This means:
 ### Development prerequisites
 
 In addition to the [Prerequisites](#prerequisites) above, you will need the following to
-develop `digitalocean_deployment_orchestrator`:
+develop `DODO`:
 
 - [pre-commit](https://pre-commit.com/)
 
@@ -79,7 +85,7 @@ GitHub Actions. See [.github/dependabot.yaml](.github/dependabot.yaml).
 
 ### Logging
 
-`digitalocean_deployment_orchestrator` uses [structlog](https://www.structlog.org/en/stable/) for structured logging.
+`DODO` uses [structlog](https://www.structlog.org/en/stable/) for structured logging.
 The logging configuration is defined in `logging.py`. Use the `configure_logging` function
 to set up logging when the application starts:
 
@@ -91,7 +97,7 @@ from digitalocean_deployment_orchestrator.logging import configure_logging
 configure_logging()
 
 logger = structlog.get_logger()
-logger.info("digitalocean_deployment_orchestrator running", key="value")
+logger.info("DODO running", key="value")
 ```
 
 ### Style
@@ -178,7 +184,7 @@ To cut a release, simply merge the release pull request.
 ### GitHub Personal Access Token
 
 In order for Release Please to automate the above process, a GitHub Actions secret called
-`RELEASE_PLEASE_TOKEN` must exist in GitHub (under digitalocean_deployment_orchestrator/settings/secrets/actions).
+`RELEASE_PLEASE_TOKEN` must exist in GitHub (under digitalocean-deployment-orchestrator/settings/secrets/actions).
 The contents of this secret must be a Personal Access Token (PAT) with the following permissions:
 
 ```text
