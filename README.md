@@ -21,6 +21,9 @@ A Python package to
 ## Quickstart
 
 ```sh
+# add the following line to the dependencies table in `pyproject.toml`:
+# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/v0.1.0/digitalocean_deployment_orchestrator-0.1.0-py3-none-any.whl"
+
 # create a blueprint for a 'test' environment:
 cp infra/env_blueprints/_sample.py.txt infra/env_blueprints/test.py
 # edit the contents of the test.py blueprint ...
