@@ -3,8 +3,8 @@ import json
 import pytest
 import structlog
 
-from digitalocean_deployment_orchestrator import main as entrypoint
-from digitalocean_deployment_orchestrator.logging import configure_logging
+from src.digitalocean_deployment_orchestrator import main as entrypoint
+from src.digitalocean_deployment_orchestrator.logging import configure_logging
 
 
 def test_main_runs_without_error():
