@@ -24,3 +24,13 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture
+def droplet_response():
+    return {
+        "networks": {
+            "v4": [{"type": "public", "ip_address": "1.2.3.4"}],
+            "v6": [{"type": "private", "ip_address": "fd00::1"}],
+        }
+    }
