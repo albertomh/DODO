@@ -56,7 +56,7 @@ def tests_with_coverage(session: nox.Session) -> None:
     session.run(
         "pytest",
         "--cov=digitalocean_deployment_orchestrator",
-        "--cov-report=term-missing",
+        "--cov-report=term:skip-covered",
         "--cov-report=html",
         "tests/",
         *pytest_args,
