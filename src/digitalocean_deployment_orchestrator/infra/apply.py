@@ -24,6 +24,7 @@ from digitalocean_deployment_orchestrator.utils import (
 )
 
 LOGGER = structlog.get_logger()
+configure_logging()
 
 
 def load_environment_blueprint(
@@ -181,7 +182,6 @@ def apply(is_dry_run: bool, client: DO_Client, blueprints_dir: Path, env: Enviro
 
 
 if __name__ == "__main__":
-    configure_logging()
 
     def _dir_path(string):
         dir_path = Path(string)
