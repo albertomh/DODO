@@ -49,8 +49,10 @@ markers = [
 [tool.coverage.report]
 omit = [
     "*/__init__.py",
+    "*/types.py",
+    "*/types_DO.py",
     "noxfile.py",
-    "*/tests/*"
+    "*/tests/*",
 ]
 exclude_lines = [
     "pragma: no cover",
@@ -101,4 +103,8 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/digitalocean_deployment_orchestrator/**.py" = [
+    "S603", # <https://docs.astral.sh/ruff/rules/subprocess-without-shell-equals-true>
+    "S607", # <https://docs.astral.sh/ruff/rules/start-process-with-partial-path>
+]
 "tests/**.py" = ["S"]
