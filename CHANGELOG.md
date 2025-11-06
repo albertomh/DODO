@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0](https://github.com/albertomh/DODO/compare/v0.1.0...v0.2.0) (2025-11-05)
+
+
+### Features
+
+* Add utils common across infra & deploy packages ([#7](https://github.com/albertomh/DODO/issues/7)) ([ee3c69b](https://github.com/albertomh/DODO/commit/ee3c69bfd924228bdf6d08222ce51267ef5911c8))
+* Define types - both internal and specific to Digital Ocean APIs ([#3](https://github.com/albertomh/DODO/issues/3)) ([3cbd768](https://github.com/albertomh/DODO/commit/3cbd768770f624e682e44d8f57972c81aaf4661c))
+* Infra.apply module to plan & effect changes to resources ([#8](https://github.com/albertomh/DODO/issues/8)) ([84f3599](https://github.com/albertomh/DODO/commit/84f359929fd75fb6f1d19f187a9ebb5ac2307532))
+
+
+### Bug Fixes
+
+* **ci:** Call the right _checks job in the 'ci' workflow ([#6](https://github.com/albertomh/DODO/issues/6)) ([8b3eb2c](https://github.com/albertomh/DODO/commit/8b3eb2c99cbec4ee8e66ea4005d1b5e51c7c210b))
+
 ## 0.1.0 (2025-11-03)
 
 
