@@ -15,7 +15,7 @@ def get_DO_token() -> str:
     token = os.getenv(token_env_var)
 
     if not token:
-        raise ValueError(f"Env. var '{token_env_var}' not found or unset.")
+        raise ValueError(f"environment variable '{token_env_var}' not found or unset")
 
     return token
 
