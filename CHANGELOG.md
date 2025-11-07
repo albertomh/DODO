@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.0](https://github.com/albertomh/DODO/compare/v0.2.0...v0.3.0) (2025-11-07)
+
+
+### Features
+
+* Add module to check service health via HTTP requests ([#11](https://github.com/albertomh/DODO/issues/11)) ([05f47a1](https://github.com/albertomh/DODO/commit/05f47a14d261f68da0f837b9b5410c2cc13033c4))
+* Add module to perform blue/green deployment ([#12](https://github.com/albertomh/DODO/issues/12)) ([7227b7d](https://github.com/albertomh/DODO/commit/7227b7de6574a45ceb68337441541ae28aac00cb))
+* Add utility to list Droplet IPs by environment ([#9](https://github.com/albertomh/DODO/issues/9)) ([cb2271b](https://github.com/albertomh/DODO/commit/cb2271bc198c99e8a92cfde82239e839417d6ba1))
+
 ## [0.2.0](https://github.com/albertomh/DODO/compare/v0.1.0...v0.2.0) (2025-11-05)
 
 
