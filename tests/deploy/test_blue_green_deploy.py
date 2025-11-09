@@ -74,7 +74,6 @@ class TestLogInToGithubContainerRegistry:
         mock_run.return_value = MagicMock(returncode=0)
         log_in_to_github_container_registry("user", "token")
         mock_run.assert_called_once()
-        # Function logs on success - check it was called successfully
         assert mock_run.return_value.returncode == 0
 
     @patch("digitalocean_deployment_orchestrator.deploy.blue_green_deploy.subprocess.run")
@@ -181,7 +180,6 @@ class TestCreateSelfSignedCert:
         cert_dir = tmp_path
         create_self_signed_cert(cert_dir)
 
-        # Check openssl was called
         assert any("openssl" in str(call) for call in mock_run.call_args_list)
 
     def test_create_self_signed_cert_existing(self, tmp_path):
@@ -195,40 +193,40 @@ class TestCreateSelfSignedCert:
             "digitalocean_deployment_orchestrator.deploy.blue_green_deploy.subprocess.run"
         ) as mock_run:
             create_self_signed_cert(cert_dir)
-            # Should not call openssl if certs exist
             assert not any("openssl" in str(call) for call in mock_run.call_args_list)
 
 
 @patch("digitalocean_deployment_orchestrator.deploy.blue_green_deploy.subprocess.run")
 def test_update_nginx_proxy_target_success(mock_run, tmp_path):
-    # Setup mock responses
     mock_run.side_effect = [
         MagicMock(returncode=0),  # nginx -t
         MagicMock(returncode=0),  # systemctl reload
     ]
 
-    nginx_conf_dir = tmp_path
+    nginx_conf_dir = tmp_path / "nginx_conf"
     (nginx_conf_dir / "sites-enabled").mkdir(parents=True)
     (nginx_conf_dir / "conf.d").mkdir(parents=True)
 
-    # Create template
-    template_dir = tmp_path / "deploy_package"
-    template_dir.mkdir()
-    nginx_template_dir = template_dir / "nginx"
-    nginx_template_dir.mkdir()
+    module_dir = tmp_path / "deploy" / "digitalocean_deployment_orchestrator" / "deploy"
+    module_dir.mkdir(parents=True)
+    fake_file = module_dir / "blue_green_deploy.py"
+    fake_file.touch()
+
+    correct_deploy_dir = module_dir.parent
+    nginx_template_dir = correct_deploy_dir / "nginx"
+    nginx_template_dir.mkdir(parents=True)
     template_file = nginx_template_dir / "app.conf.template"
     template_file.write_text("proxy_pass http://localhost:{{APP_PORT}};")
 
     with patch(
-        "digitalocean_deployment_orchestrator.deploy.blue_green_deploy.DEPLOY_PACKAGE_DIR",
-        template_dir,
+        "digitalocean_deployment_orchestrator.deploy.blue_green_deploy.__file__",
+        str(fake_file),
     ):
         update_nginx_proxy_target(PortColour.GREEN, nginx_conf_dir)
 
-        # Verify config was written
-        conf_file = nginx_conf_dir / "conf.d" / "app.conf"
-        assert conf_file.exists()
-        assert "8080" in conf_file.read_text()
+    conf_file = nginx_conf_dir / "conf.d" / "app.conf"
+    assert conf_file.exists()
+    assert "8080" in conf_file.read_text()
 
 
 @patch("digitalocean_deployment_orchestrator.deploy.blue_green_deploy.subprocess.run")
