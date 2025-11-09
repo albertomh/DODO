@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/albertomh/DODO/compare/v0.3.0...v0.3.1) (2025-11-09)
+
+
+### Bug Fixes
+
+* Path for deploy package when looking for nginx conf template ([#13](https://github.com/albertomh/DODO/issues/13)) ([e87ca46](https://github.com/albertomh/DODO/commit/e87ca460ff7b90646d366dfdfb0c3d4e87b47f49))
+
 ## [0.3.0](https://github.com/albertomh/DODO/compare/v0.2.0...v0.3.0) (2025-11-07)
 
 
