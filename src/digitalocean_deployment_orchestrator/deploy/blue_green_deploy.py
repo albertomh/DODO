@@ -32,7 +32,7 @@ from digitalocean_deployment_orchestrator.utils import set_up_basic_logging
 
 GHCR_BASE_URL = "ghcr.io"
 
-DEPLOY_PACKAGE_DIR = Path(__file__).resolve().parents[1]
+DEPLOY_PACKAGE_DIR = Path(__file__).resolve().parent
 
 LOG = logging.getLogger(__name__)
 
