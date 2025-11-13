@@ -1,0 +1,143 @@
+#cloud-config
+
+# <https://cloudinit.readthedocs.io/en/latest/>
+# <https://www.digitalocean.com/community/tutorials/an-introduction-to-cloud-config-scripting>
+# <https://gist.github.com/dazeb/fde301b5035e8af3b040c6109c3d8170>
+
+# Note: this is a Jinja2 template that generates a #cloud-config file!
+# Usage:
+#   The following environment variables must be interpolated with this template:
+# | env_variable        | content                                          |
+# | ------------------- | ------------------------------------------------ |
+# | SSH__PUBLIC_KEY     | public key to use for Droplet admin user         |
+#
+# Validate this file with `sudo cloud-init schema --config-file app_server.yaml`
+#
+# To debug installation, see `/var/log/cloud-init-output.log` in the VPS.
+
+hostname: appserver
+# fqdn: example-host.example.com
+# manage_etc_hosts: true
+
+timezone: "Etc/UTC"
+
+swap:
+  filename: /swapfile
+  size: "1G"
+  maxsize: "2G"
+
+groups:
+  - docker
+
+users:
+  - default
+  - name: admin
+    groups: adm, sudo, docker
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - "{{ ssh__public_key }}"
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - certbot
+  - containerd.io
+  - fail2ban
+  - git
+  - gnupg-agent
+  - nginx
+  - python3-certbot-nginx
+  - software-properties-common
+  - ufw
+  - unattended-upgrades
+  - vim
+
+write_files:
+  # fine-tune swap behaviour for swapfile created elsewhere
+  - path: /etc/sysctl.d/99-swap.conf
+    content: |
+      vm.swappiness=10
+      vm.vfs_cache_pressure=50
+  # enable ipv4 forwarding, required on CIS hardened machines
+  - path: /etc/sysctl.d/enabled_ipv4_forwarding.conf
+    content: |
+      net.ipv4.ip_forward=1
+      net.ipv4.conf.all.forwarding=1
+  - path: /etc/ssh/sshd_config.d/99-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      X11Forwarding no
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+  - path: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      bantime = 1h
+      findtime = 10m
+      maxretry = 5
+
+runcmd:
+  - ufw allow 22/tcp
+  - ufw allow 80/tcp
+  - ufw allow 443/tcp
+  # `lo`: loopback
+  - ufw allow in on lo
+  - ufw allow out on lo
+  - ufw --force enable
+
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+  - |
+    cat > /etc/apt/apt.conf.d/52unattended-upgrades-local <<EOF
+      Unattended-Upgrade::Allowed-Origins {
+        "origin=Debian,codename=$(lsb_release -cs),label=Debian-Security";
+      };
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+    EOF
+
+  - |
+    wget --quiet -O - https://download.docker.com/linux/debian/gpg \
+    | gpg --dearmor --output /usr/share/keyrings/docker-archive-keyring.gpg
+  - chmod 0444 /usr/share/keyrings/docker-archive-keyring.gpg
+  - |
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
+    > /etc/apt/sources.list.d/docker.list
+  - chmod 0444 /etc/apt/sources.list.d/docker.list
+  - apt-get update
+  - apt-get install docker-ce docker-ce-cli -y
+
+  - sh -c 'export UV_INSTALL_DIR=/usr/local/bin && wget -qO- https://astral.sh/uv/0.9.3/install.sh | sh'
+  - echo "0 0 * * MON root uv self update" | sudo tee -a /etc/crontab
+
+  - mkdir -p /etc/nginx/
+  - chown -R admin:admin /etc/nginx
+  - |
+    openssl req -x509 -newkey rsa:4096 \
+    -keyout /etc/nginx/privkey.pem \
+    -out /etc/nginx/fullchain.pem \
+    -days 365 -nodes \
+    -subj "/CN=$(wget --quiet ifconfig.me)"
+
+  - apt autoremove -y
+
+# disable root SSH login and password authentication for SSH
+ssh_pwauth: false
+disable_root: true
+
+final_message: "cloud-init completed at $TIMESTAMP after $UPTIME seconds"
+
+power_state:
+  mode: reboot
+  message: Rebooting after initial setup
+  timeout: 30
+  condition: True
