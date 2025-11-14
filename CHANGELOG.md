@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/albertomh/DODO/compare/v0.3.1...v0.3.2) (2025-11-14)
+
+
+### Documentation
+
+* Add cloud-config template samples for app, postgres servers ([#17](https://github.com/albertomh/DODO/issues/17)) ([dee8084](https://github.com/albertomh/DODO/commit/dee80849a40d8cd558c6e42368e77508fb000639))
+* Add env. blueprint sample with app + db droplets ([#19](https://github.com/albertomh/DODO/issues/19)) ([a64322a](https://github.com/albertomh/DODO/commit/a64322afce8eb0e3dfb358a1f355f47bcdc55e90))
+
 ## [0.3.1](https://github.com/albertomh/DODO/compare/v0.3.0...v0.3.1) (2025-11-09)
 
 
