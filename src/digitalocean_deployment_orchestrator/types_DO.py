@@ -71,6 +71,9 @@ class DropletNetworks(TypedDict):
     v6: list[NetworkInfo]
 
 
+DropletStatus = Literal["new", "active", "off", "archive"]
+
+
 class DropletResponse(BaseDroplet):
     """Data object received as a response from Droplet-related APIs.
 
@@ -78,6 +81,7 @@ class DropletResponse(BaseDroplet):
     """
 
     id: int
+    status: DropletStatus
     created_at: str
     networks: DropletNetworks
 
