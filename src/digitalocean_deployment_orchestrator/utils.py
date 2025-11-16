@@ -1,36 +1,11 @@
 import json
 import logging
-import os
 from datetime import datetime
 from uuid import UUID
 
 import structlog
-from pydo import Client
 
 from digitalocean_deployment_orchestrator.types_DO import DropletResponse, IPVersion
-
-
-def get_DO_token() -> str:
-    token_env_var = "DIGITALOCEAN__TOKEN"  # noqa: S105 hardcoded-password-string
-    token = os.getenv(token_env_var)
-
-    if not token:
-        raise ValueError(f"environment variable '{token_env_var}' not found or unset")
-
-    return token
-
-
-def get_DO_client():
-    """
-    Click-ops for this to work:
-    1. Create an API token <https://cloud.digitalocean.com/account/api/tokens>
-        1. Set an expiration date
-        2. Set Custom Scopes:
-            - droplet: `create`, `update`, `delete`
-            - ssh_key: `read`
-            - tag: `create`
-    """
-    return Client(get_DO_token())
 
 
 def get_wkid_from_tags(tags: list[str]) -> UUID | None:

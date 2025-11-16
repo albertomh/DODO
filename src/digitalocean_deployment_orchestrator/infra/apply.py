@@ -13,15 +13,13 @@ from digitalocean_deployment_orchestrator.infra.utils import import_module_from_
 from digitalocean_deployment_orchestrator.logging import configure_logging
 from digitalocean_deployment_orchestrator.types import Environment
 from digitalocean_deployment_orchestrator.types_DO import (
+    DigitalOceanCredentials,
     DropletCreateResponse,
     DropletListResponse,
     DropletRequest,
     DropletResponse,
 )
-from digitalocean_deployment_orchestrator.utils import (
-    get_DO_client,
-    get_wkid_from_tags,
-)
+from digitalocean_deployment_orchestrator.utils import get_wkid_from_tags
 
 LOGGER = structlog.get_logger()
 configure_logging()
@@ -215,5 +213,6 @@ if __name__ == "__main__":
     is_dry_run = not args.no_dry_run
     LOGGER.info("Running DODO", environment=env.value)
 
-    do_client = get_DO_client()
+    do_creds = DigitalOceanCredentials.from_env()
+    do_client = DO_Client(do_creds.digitalocean__token)
     apply(is_dry_run, do_client, blueprints_dir, env)

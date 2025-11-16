@@ -17,6 +17,8 @@ class EnvVarDataClass:
     ```
     code that uses an object created from the above class will expect the environment
     variable `SSH__PUBLIC_KEY` to be set.
+
+    Initialise with values from the environment by calling the `from_env()` class method.
     """
 
     @classmethod
