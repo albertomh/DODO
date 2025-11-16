@@ -19,12 +19,12 @@ from pydo import Client as DO_Client
 
 from digitalocean_deployment_orchestrator.types import Environment
 from digitalocean_deployment_orchestrator.types_DO import (
+    DigitalOceanCredentials,
     DropletListResponse,
     DropletResponse,
     IPVersion,
 )
 from digitalocean_deployment_orchestrator.utils import (
-    get_DO_client,
     get_public_ip,
     get_wkid_from_tags,
 )
@@ -65,5 +65,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     env = args.env
 
-    do_client = get_DO_client()
+    do_creds = DigitalOceanCredentials.from_env()
+    do_client = DO_Client(do_creds.digitalocean__token)
     main(do_client=do_client, env=env)

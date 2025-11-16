@@ -1,32 +1,6 @@
-from unittest.mock import MagicMock, patch
 from uuid import UUID
 
-import pytest
-
 from digitalocean_deployment_orchestrator import utils
-
-
-class TestGetDOToken:
-    def test_get_do_token_found(self, monkeypatch):
-        monkeypatch.delenv("DIGITALOCEAN__TOKEN", raising=False)
-        monkeypatch.setenv("DIGITALOCEAN__TOKEN", "secret123")
-        assert utils.get_DO_token() == "secret123"
-
-    def test_get_do_token_missing(self, monkeypatch):
-        monkeypatch.delenv("DIGITALOCEAN__TOKEN", raising=False)
-        with pytest.raises(ValueError, match="DIGITALOCEAN__TOKEN"):
-            utils.get_DO_token()
-
-
-class TestGetDOClient:
-    @patch("digitalocean_deployment_orchestrator.utils.Client")
-    @patch("digitalocean_deployment_orchestrator.utils.get_DO_token", return_value="tok")
-    def test_get_do_client(self, mock_token, mock_client):
-        client_instance = MagicMock()
-        mock_client.return_value = client_instance
-        result = utils.get_DO_client()
-        mock_client.assert_called_once_with("tok")
-        assert result == mock_client.return_value
 
 
 class TestGetWKIDFromTags:
