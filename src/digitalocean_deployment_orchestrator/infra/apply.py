@@ -86,11 +86,11 @@ def load_environment_blueprint(
 
 def manage_droplets(
     is_dry_run: bool,
-    client: DO_Client,
+    do_client: DO_Client,
     env: Environment,
     blueprint_droplets: list[DropletRequest],
 ):
-    actual_droplets_res: DropletListResponse = client.droplets.list(tag_name=env.tag)
+    actual_droplets_res: DropletListResponse = do_client.droplets.list(tag_name=env.tag)
     actual_droplets: list[DropletResponse] = actual_droplets_res["droplets"]
     needed_droplets: list[DropletRequest] = copy.deepcopy(blueprint_droplets)
     actual_droplet_uuids = {get_wkid_from_tags(d["tags"]) for d in actual_droplets}
@@ -117,7 +117,7 @@ def manage_droplets(
         try:
             # deep copy + convert UUIDs
             safe_req = json.loads(json.dumps(droplet_req, default=str))
-            res: DropletCreateResponse = client.droplets.create(body=safe_req)
+            res: DropletCreateResponse = do_client.droplets.create(body=safe_req)
         except Exception as err:
             LOGGER.error("Error creating Droplet", err=str(err))
             raise err
@@ -148,7 +148,7 @@ def manage_droplets(
 
     def _destroy_droplet(droplet_id: int, wkid: UUID):
         try:
-            client.droplets.destroy(droplet_id=droplet_id)
+            do_client.droplets.destroy(droplet_id=droplet_id)
         except Exception as err:
             LOGGER.error("Failed to destroy Droplet", err=str(err))
             raise err
@@ -175,10 +175,15 @@ def manage_droplets(
                     _destroy_droplet(droplet["id"], wkid)
 
 
-def apply(is_dry_run: bool, client: DO_Client, blueprints_dir: Path, env: Environment):
+def apply(
+    is_dry_run: bool,
+    do_client: DO_Client,
+    blueprints_dir: Path,
+    env: Environment,
+):
     blueprint: EnvironmentBlueprint = load_environment_blueprint(blueprints_dir, env)
-    blueprint_droplets = blueprint["droplets"]
-    manage_droplets(is_dry_run, client, env, blueprint_droplets)
+
+    manage_droplets(is_dry_run, do_client, env, blueprint["droplets"])
 
 
 if __name__ == "__main__":
@@ -210,5 +215,5 @@ if __name__ == "__main__":
     is_dry_run = not args.no_dry_run
     LOGGER.info("Running DODO", environment=env.value)
 
-    client = get_DO_client()
-    apply(is_dry_run, client, blueprints_dir, env)
+    do_client = get_DO_client()
+    apply(is_dry_run, do_client, blueprints_dir, env)
