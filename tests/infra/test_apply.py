@@ -76,18 +76,20 @@ def fake_env():
 
 
 @pytest.fixture
-def fake_client():
+def fake_do_client():
     client = MagicMock()
+
     client.droplets.list.return_value = {"droplets": []}
     client.droplets.create.return_value = {"droplet": {"id": 1}}
+
     return client
 
 
 class TestManageDroplets:
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
-    def test_manage_droplets_no_changes(self, mock_get_wkid, fake_client, fake_env):
+    def test_manage_droplets_no_changes(self, mock_get_wkid, fake_do_client, fake_env):
         mock_get_wkid.side_effect = [UUID("a" * 32)] * 2
-        fake_client.droplets.list.return_value = {
+        fake_do_client.droplets.list.return_value = {
             "droplets": [{"tags": ["wkid:a" * 32], "name": "existing"}]
         }
 
@@ -96,14 +98,14 @@ class TestManageDroplets:
             "well_known_uuid": UUID("a" * 32),
             "name": "existing",
         }
-        apply.manage_droplets(True, fake_client, fake_env, [bp_droplet])
+        apply.manage_droplets(True, fake_do_client, fake_env, [bp_droplet])
 
-        fake_client.droplets.create.assert_not_called()
-        fake_client.droplets.destroy.assert_not_called()
+        fake_do_client.droplets.create.assert_not_called()
+        fake_do_client.droplets.destroy.assert_not_called()
 
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
     def test_manage_droplets_dry_run_creates(
-        self, mock_get_wkid, fake_client, fake_env, capsys
+        self, mock_get_wkid, fake_do_client, fake_env, capsys
     ):
         mock_get_wkid.side_effect = [None, UUID("1" * 32), UUID("1" * 32)]
         bp_droplet = {
@@ -113,23 +115,23 @@ class TestManageDroplets:
             "user_data": "secret",
         }
 
-        apply.manage_droplets(True, fake_client, fake_env, [bp_droplet])
+        apply.manage_droplets(True, fake_do_client, fake_env, [bp_droplet])
 
         logs = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
         events = {entry["event"]: entry for entry in logs}
         assert "Droplets to create" in events
         assert events["Droplet comparison"]["to_create"] == 1
-        fake_client.droplets.create.assert_not_called()
+        fake_do_client.droplets.create.assert_not_called()
 
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
     def test_manage_droplets_creates(self, mock_get_wkid):
-        fake_client = MagicMock()
+        fake_do_client = MagicMock()
         fake_env = MagicMock()
         fake_env.tag = "env:test"
         fake_env.value = "test"
 
-        fake_client.droplets.list.return_value = {"droplets": []}
-        fake_client.droplets.create.return_value = {"droplet": {"id": 999}}
+        fake_do_client.droplets.list.return_value = {"droplets": []}
+        fake_do_client.droplets.create.return_value = {"droplet": {"id": 999}}
 
         mock_get_wkid.return_value = UUID("1" * 32)
 
@@ -140,19 +142,19 @@ class TestManageDroplets:
             "user_data": "secret",
         }
 
-        apply.manage_droplets(False, fake_client, fake_env, [bp_droplet])
+        apply.manage_droplets(False, fake_do_client, fake_env, [bp_droplet])
 
-        fake_client.droplets.create.assert_called_once()
-        call_args = fake_client.droplets.create.call_args[1]
+        fake_do_client.droplets.create.assert_called_once()
+        call_args = fake_do_client.droplets.create.call_args[1]
         assert "body" in call_args
         assert call_args["body"]["name"] == "web"
 
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
     def test_manage_droplets_destroy_dry_run(
-        self, mock_get_wkid, fake_client, fake_env, capsys
+        self, mock_get_wkid, fake_do_client, fake_env, capsys
     ):
         mock_get_wkid.side_effect = [UUID("1" * 32), None, UUID("1" * 32)]
-        fake_client.droplets.list.return_value = {
+        fake_do_client.droplets.list.return_value = {
             "droplets": [
                 {
                     "id": 321,
@@ -162,19 +164,19 @@ class TestManageDroplets:
             ]
         }
 
-        apply.manage_droplets(True, fake_client, fake_env, [])
+        apply.manage_droplets(True, fake_do_client, fake_env, [])
 
         logs = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
         events = {entry["event"]: entry for entry in logs}
         assert "Droplets to destroy" in events
         assert events["Droplet comparison"]["to_destroy"] == 1
-        fake_client.droplets.create.assert_not_called()
+        fake_do_client.droplets.create.assert_not_called()
 
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
-    def test_manage_droplets_destroy(self, mock_get_wkid, fake_client, fake_env):
+    def test_manage_droplets_destroy(self, mock_get_wkid, fake_do_client, fake_env):
         mock_get_wkid.return_value = UUID("1" * 32)
 
-        fake_client.droplets.list.return_value = {
+        fake_do_client.droplets.list.return_value = {
             "droplets": [
                 {
                     "id": 123,
@@ -184,17 +186,21 @@ class TestManageDroplets:
             ]
         }
 
-        apply.manage_droplets(False, fake_client, fake_env, [])
+        apply.manage_droplets(False, fake_do_client, fake_env, [])
 
-        fake_client.droplets.destroy.assert_called_once_with(droplet_id=123)
+        fake_do_client.droplets.destroy.assert_called_once_with(droplet_id=123)
 
 
 class TestApply:
     @patch("digitalocean_deployment_orchestrator.infra.apply.load_environment_blueprint")
     @patch("digitalocean_deployment_orchestrator.infra.apply.manage_droplets")
-    def test_apply_calls_correctly(self, mock_manage, mock_load, fake_client, fake_env):
+    def test_apply_calls_correctly(
+        self, mock_manage_droplets, mock_load, fake_do_client, fake_env
+    ):
         bp = {"droplets": [{"name": "web"}]}
         mock_load.return_value = bp
 
-        apply.apply(False, fake_client, Path("."), fake_env)
-        mock_manage.assert_called_once_with(False, fake_client, fake_env, bp["droplets"])
+        apply.apply(False, fake_do_client, Path("."), fake_env)
+        mock_manage_droplets.assert_called_once_with(
+            False, fake_do_client, fake_env, bp["droplets"]
+        )
