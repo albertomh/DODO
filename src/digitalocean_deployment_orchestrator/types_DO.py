@@ -1,8 +1,16 @@
-# Types specific to Digital Ocean
+# Types specific to Digital Ocean for use in DODO environment blueprints.
 
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal, NotRequired, TypedDict
 from uuid import UUID
+
+from digitalocean_deployment_orchestrator.types import EnvVarDataClass
+
+
+@dataclass(frozen=True)
+class DigitalOceanCredentials(EnvVarDataClass):
+    digitalocean__token: str
 
 
 class MetaApiRes(TypedDict):
