@@ -3,4 +3,5 @@
 [files]
 extend-exclude = [
   "CHANGELOG.md",
+  "docs/droplet_*.json",
 ]
