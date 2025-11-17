@@ -6,12 +6,22 @@ from pathlib import Path
 from uuid import UUID
 
 import structlog
+from cloudflare import Cloudflare
+from cloudflare.types.dns import ARecord
+from cloudflare.types.zones.zone import Zone
 from pydo import Client as DO_Client
 
-from digitalocean_deployment_orchestrator.infra.types import EnvironmentBlueprint
+from digitalocean_deployment_orchestrator.infra.types import (
+    DropletDNSRecord,
+    EnvironmentBlueprint,
+)
 from digitalocean_deployment_orchestrator.infra.utils import import_module_from_path
+from digitalocean_deployment_orchestrator.list_droplet_IPs import get_droplet_ips_for_env
 from digitalocean_deployment_orchestrator.logging import configure_logging
 from digitalocean_deployment_orchestrator.types import Environment
+from digitalocean_deployment_orchestrator.types_cloudflare import (
+    CloudflareCredentials,
+)
 from digitalocean_deployment_orchestrator.types_DO import (
     DigitalOceanCredentials,
     DropletCreateResponse,
@@ -19,7 +29,9 @@ from digitalocean_deployment_orchestrator.types_DO import (
     DropletRequest,
     DropletResponse,
 )
-from digitalocean_deployment_orchestrator.utils import get_wkid_from_tags
+from digitalocean_deployment_orchestrator.utils import (
+    get_wkid_from_tags,
+)
 
 LOGGER = structlog.get_logger()
 configure_logging()
@@ -173,15 +185,85 @@ def manage_droplets(
                     _destroy_droplet(droplet["id"], wkid)
 
 
+def manage_cloudflare_dns(
+    is_dry_run: bool,
+    do_client: DO_Client,
+    cf_client: Cloudflare,
+    env: Environment,
+    droplet_dns_blueprint: list[DropletDNSRecord],
+):
+    droplet_ips_for_env = get_droplet_ips_for_env(do_client, env)
+
+    for droplet_dns in droplet_dns_blueprint:
+        try:
+            wkid = droplet_dns["droplet_wkid"]
+            droplet_ip = droplet_ips_for_env[wkid]
+        except KeyError:
+            LOGGER.warning(
+                "Could not match wkid to running droplet", droplet_wkid=str(wkid)
+            )
+            break
+
+        dns_record = droplet_dns["dns_record"]
+        zone: Zone = cf_client.zones.get(zone_id=dns_record["zone_id"])
+        if not zone:
+            raise RuntimeError(f"Zone {dns_record['zone_id']} not found in Cloudflare")
+        zone_id = zone.id
+
+        cur_dns_records: list[ARecord] = cf_client.dns.records.list(
+            zone_id=zone_id,
+            name=dns_record["record_name"],
+            type="A",
+        ).result
+
+        new_record_data = {
+            "zone_id": zone_id,
+            "type": "A",
+            "name": dns_record["record_name"],
+            "content": droplet_ip,
+            "proxied": dns_record["proxied"],
+        }
+
+        if cur_dns_records:
+            if is_dry_run:
+                LOGGER.info(
+                    "Would update DNS record", record_name=dns_record["record_name"]
+                )
+            else:
+                update_record_data = {
+                    "dns_record_id": cur_dns_records[0].id,
+                    **new_record_data,
+                }
+                cf_client.dns.records.update(**update_record_data)
+                LOGGER.info("Updated DNS record", record_name=dns_record["record_name"])
+        else:
+            if is_dry_run:
+                LOGGER.info(
+                    "Would create DNS record", record_name=dns_record["record_name"]
+                )
+            else:
+                cf_client.dns.records.create(**new_record_data)
+                LOGGER.info("Created DNS record", record_name=dns_record["record_name"])
+
+
 def apply(
     is_dry_run: bool,
     do_client: DO_Client,
+    cloudflare_client: Cloudflare,
     blueprints_dir: Path,
     env: Environment,
 ):
     blueprint: EnvironmentBlueprint = load_environment_blueprint(blueprints_dir, env)
 
     manage_droplets(is_dry_run, do_client, env, blueprint["droplets"])
+
+    manage_cloudflare_dns(
+        is_dry_run,
+        do_client,
+        cloudflare_client,
+        env,
+        blueprint["dns"],
+    )
 
 
 if __name__ == "__main__":
@@ -215,4 +297,6 @@ if __name__ == "__main__":
 
     do_creds = DigitalOceanCredentials.from_env()
     do_client = DO_Client(do_creds.digitalocean__token)
-    apply(is_dry_run, do_client, blueprints_dir, env)
+    cloudflare_creds = CloudflareCredentials.from_env()
+    cloudflare_client = Cloudflare(api_token=cloudflare_creds.cloudflare__token)
+    apply(is_dry_run, do_client, cloudflare_client, blueprints_dir, env)

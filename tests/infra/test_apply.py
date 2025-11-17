@@ -85,6 +85,19 @@ def fake_do_client():
     return client
 
 
+@pytest.fixture
+def fake_cf_client():
+    client = MagicMock()
+
+    client.zones.get.return_value = None
+
+    client.dns.records.list.return_value.result = []
+    client.dns.records.update.return_value = {}
+    client.dns.records.create.return_value = {}
+
+    return client
+
+
 class TestManageDroplets:
     @patch("digitalocean_deployment_orchestrator.infra.apply.get_wkid_from_tags")
     def test_manage_droplets_no_changes(self, mock_get_wkid, fake_do_client, fake_env):
@@ -191,16 +204,183 @@ class TestManageDroplets:
         fake_do_client.droplets.destroy.assert_called_once_with(droplet_id=123)
 
 
+class TestManageCloudflareDNS:
+    @patch("digitalocean_deployment_orchestrator.infra.apply.get_droplet_ips_for_env")
+    def test_manage_cf_dns_update_dry_run(
+        self, mock_get_ips, fake_do_client, fake_cf_client, fake_env, capsys
+    ):
+        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.0.0.1"}
+
+        zone = MagicMock()
+        zone.id = "zone123"
+        fake_cf_client.zones.get.return_value = zone
+
+        existing_record = MagicMock()
+        existing_record.id = "rec999"
+        fake_cf_client.dns.records.list.return_value.result = [existing_record]
+
+        bp = [
+            {
+                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
+                "dns_record": {
+                    "zone_id": "zone123",
+                    "record_name": "api.example.com",
+                    "proxied": True,
+                },
+            }
+        ]
+
+        apply.manage_cloudflare_dns(True, fake_do_client, fake_cf_client, fake_env, bp)
+
+        logs = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+        events = {e["event"]: e for e in logs}
+
+        assert "Would update DNS record" in events
+        fake_cf_client.dns.records.update.assert_not_called()
+        fake_cf_client.dns.records.create.assert_not_called()
+
+    @patch("digitalocean_deployment_orchestrator.infra.apply.get_droplet_ips_for_env")
+    def test_manage_cf_dns_update(
+        self, mock_get_ips, fake_do_client, fake_cf_client, fake_env
+    ):
+        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.0.0.2"}
+
+        zone = MagicMock()
+        zone.id = "zone123"
+        fake_cf_client.zones.get.return_value = zone
+
+        existing_record = MagicMock()
+        existing_record.id = "rec444"
+        fake_cf_client.dns.records.list.return_value.result = [existing_record]
+
+        bp = [
+            {
+                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
+                "dns_record": {
+                    "zone_id": "zone123",
+                    "record_name": "web.example.com",
+                    "proxied": False,
+                },
+            }
+        ]
+
+        apply.manage_cloudflare_dns(False, fake_do_client, fake_cf_client, fake_env, bp)
+
+        fake_cf_client.dns.records.update.assert_called_once()
+        call_args = fake_cf_client.dns.records.update.call_args.kwargs
+        assert call_args["dns_record_id"] == "rec444"
+        assert call_args["content"] == "10.0.0.2"
+
+    @patch("digitalocean_deployment_orchestrator.infra.apply.get_droplet_ips_for_env")
+    def test_manage_cf_dns_create_dry_run(
+        self, mock_get_ips, fake_do_client, fake_cf_client, fake_env, capsys
+    ):
+        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.1.1.1"}
+
+        zone = MagicMock()
+        zone.id = "zone123"
+        fake_cf_client.zones.get.return_value = zone
+
+        fake_cf_client.dns.records.list.return_value.result = []
+
+        bp = [
+            {
+                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
+                "dns_record": {
+                    "zone_id": "zone123",
+                    "record_name": "db.example.com",
+                    "proxied": True,
+                },
+            }
+        ]
+
+        apply.manage_cloudflare_dns(True, fake_do_client, fake_cf_client, fake_env, bp)
+
+        logs = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+        events = {e["event"]: e for e in logs}
+
+        assert "Would create DNS record" in events
+        fake_cf_client.dns.records.create.assert_not_called()
+
+    @patch("digitalocean_deployment_orchestrator.infra.apply.get_droplet_ips_for_env")
+    def test_manage_cf_dns_create(
+        self, mock_get_ips, fake_do_client, fake_cf_client, fake_env
+    ):
+        mock_get_ips.return_value = {
+            "11111111-1111-1111-1111-111111111111": "192.168.0.5"
+        }
+
+        zone = MagicMock()
+        zone.id = "zone123"
+        fake_cf_client.zones.get.return_value = zone
+
+        fake_cf_client.dns.records.list.return_value.result = []
+
+        bp = [
+            {
+                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
+                "dns_record": {
+                    "zone_id": "zone123",
+                    "record_name": "cache.example.com",
+                    "proxied": False,
+                },
+            }
+        ]
+
+        apply.manage_cloudflare_dns(False, fake_do_client, fake_cf_client, fake_env, bp)
+
+        fake_cf_client.dns.records.create.assert_called_once()
+        call_args = fake_cf_client.dns.records.create.call_args.kwargs
+        assert call_args["content"] == "192.168.0.5"
+
+    @patch("digitalocean_deployment_orchestrator.infra.apply.get_droplet_ips_for_env")
+    def test_manage_cf_dns_missing_wkid_logs_warning(
+        self, mock_get_ips, fake_do_client, fake_cf_client, fake_env, capsys
+    ):
+        mock_get_ips.return_value = {}
+
+        bp = [
+            {
+                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
+                "dns_record": {
+                    "zone_id": "zone123",
+                    "record_name": "lost.example.com",
+                    "proxied": True,
+                },
+            }
+        ]
+
+        apply.manage_cloudflare_dns(True, fake_do_client, fake_cf_client, fake_env, bp)
+
+        logs = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+        events = {e["event"]: e for e in logs}
+
+        assert "Could not match wkid to running droplet" in events
+        fake_cf_client.dns.records.list.assert_not_called()
+        fake_cf_client.dns.records.create.assert_not_called()
+        fake_cf_client.dns.records.update.assert_not_called()
+
+
 class TestApply:
     @patch("digitalocean_deployment_orchestrator.infra.apply.load_environment_blueprint")
     @patch("digitalocean_deployment_orchestrator.infra.apply.manage_droplets")
+    @patch("digitalocean_deployment_orchestrator.infra.apply.manage_cloudflare_dns")
     def test_apply_calls_correctly(
-        self, mock_manage_droplets, mock_load, fake_do_client, fake_env
+        self,
+        mock_manage_cf_dns,
+        mock_manage_droplets,
+        mock_load,
+        fake_do_client,
+        fake_cf_client,
+        fake_env,
     ):
-        bp = {"droplets": [{"name": "web"}]}
+        bp = {"droplets": [{"name": "web"}], "dns": []}
         mock_load.return_value = bp
 
-        apply.apply(False, fake_do_client, Path("."), fake_env)
+        apply.apply(False, fake_do_client, fake_cf_client, Path("."), fake_env)
         mock_manage_droplets.assert_called_once_with(
             False, fake_do_client, fake_env, bp["droplets"]
+        )
+        mock_manage_cf_dns.assert_called_once_with(
+            False, fake_do_client, fake_cf_client, fake_env, bp["dns"]
         )
