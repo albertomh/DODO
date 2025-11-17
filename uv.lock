@@ -280,7 +280,7 @@ test = [
 requires-dist = [
     { name = "cloudflare", specifier = ">=4.3.1,<5.0.0" },
     { name = "jinja2", specifier = ">=3.1.6,<4.0.0" },
-    { name = "pydo", specifier = ">=0.18.0,<0.19.0" },
+    { name = "pydo", specifier = ">=0.21.0,<0.22.0" },
     { name = "structlog", specifier = ">=25.4.0,<26.0.0" },
 ]
 
@@ -669,7 +669,7 @@ wheels = [
 
 [[package]]
 name = "pydo"
-version = "0.18.0"
+version = "0.21.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-core" },
@@ -678,9 +678,9 @@ dependencies = [
     { name = "msrest" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/4f/cd5f53bbabdd2df81c368907d7f5c9fc9f8545c8097834c7d211377f0f5d/pydo-0.18.0.tar.gz", hash = "sha256:4bc0ec4ac01539dae9cbb357d6a3b69c0f5befdb17b0b4e85582e42d4c3e074e", size = 2189540, upload-time = "2025-10-15T10:12:55.069Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/26/57f806cfb44142d1f50a35623a8b17fabf4c0bb98cc59b4a86951bb9a8b2/pydo-0.21.0.tar.gz", hash = "sha256:012aefc2edfeeb570622af54161c1fdacf488ccac6f8d60324415e3b922ad7fb", size = 2201461, upload-time = "2025-11-13T12:01:35.034Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/d2/5eaf9c6e12a82301f1b1fd82463a242596d9cbaafdd5f0632a9031fbb904/pydo-0.18.0-py3-none-any.whl", hash = "sha256:63b51a1aca5dd483c3aea9f485998f9824e23c9c4f9827fe79b7c051c5477c29", size = 2224775, upload-time = "2025-10-15T10:12:53.445Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/ba/0a8d42a5a347a80a62eecd8b7a1768b8cf3aa50cd3be4d7cd956d1032319/pydo-0.21.0-py3-none-any.whl", hash = "sha256:739002eeaa7fd7f8b4af702acc552a0a44dfd02dbed0ebc7290cc39475836401", size = 2237950, upload-time = "2025-11-13T12:01:33.61Z" },
 ]
 
 [[package]]
