@@ -1,7 +1,7 @@
 # Types specific to Cloudflare for use in DODO environment blueprints.
 
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from digitalocean_deployment_orchestrator.types import EnvVarDataClass
 
@@ -13,5 +13,6 @@ class CloudflareCredentials(EnvVarDataClass):
 
 class DNSRecord(TypedDict):
     zone_id: str
-    record_name: str
+    type: Literal["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR"]
+    name: str
     proxied: bool
