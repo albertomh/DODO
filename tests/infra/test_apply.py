@@ -224,7 +224,8 @@ class TestManageCloudflareDNS:
                 "droplet_wkid": "11111111-1111-1111-1111-111111111111",
                 "dns_record": {
                     "zone_id": "zone123",
-                    "record_name": "api.example.com",
+                    "type": "A",
+                    "name": "api.example.com",
                     "proxied": True,
                 },
             }
@@ -258,7 +259,8 @@ class TestManageCloudflareDNS:
                 "droplet_wkid": "11111111-1111-1111-1111-111111111111",
                 "dns_record": {
                     "zone_id": "zone123",
-                    "record_name": "web.example.com",
+                    "type": "A",
+                    "name": "web.example.com",
                     "proxied": False,
                 },
             }
@@ -288,7 +290,8 @@ class TestManageCloudflareDNS:
                 "droplet_wkid": "11111111-1111-1111-1111-111111111111",
                 "dns_record": {
                     "zone_id": "zone123",
-                    "record_name": "db.example.com",
+                    "type": "A",
+                    "name": "db.example.com",
                     "proxied": True,
                 },
             }
@@ -321,7 +324,8 @@ class TestManageCloudflareDNS:
                 "droplet_wkid": "11111111-1111-1111-1111-111111111111",
                 "dns_record": {
                     "zone_id": "zone123",
-                    "record_name": "cache.example.com",
+                    "type": "A",
+                    "name": "cache.example.com",
                     "proxied": False,
                 },
             }
@@ -344,7 +348,8 @@ class TestManageCloudflareDNS:
                 "droplet_wkid": "11111111-1111-1111-1111-111111111111",
                 "dns_record": {
                     "zone_id": "zone123",
-                    "record_name": "lost.example.com",
+                    "type": "A",
+                    "name": "lost.example.com",
                     "proxied": True,
                 },
             }
