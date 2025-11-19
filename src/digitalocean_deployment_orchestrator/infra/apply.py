@@ -212,38 +212,34 @@ def manage_cloudflare_dns(
 
         cur_dns_records: list[ARecord] = cf_client.dns.records.list(
             zone_id=zone_id,
-            name=dns_record["record_name"],
+            name=dns_record["name"],
             type="A",
         ).result
 
         new_record_data = {
             "zone_id": zone_id,
-            "type": "A",
-            "name": dns_record["record_name"],
+            "type": dns_record["type"],
+            "name": dns_record["name"],
             "content": droplet_ip,
             "proxied": dns_record["proxied"],
         }
 
         if cur_dns_records:
             if is_dry_run:
-                LOGGER.info(
-                    "Would update DNS record", record_name=dns_record["record_name"]
-                )
+                LOGGER.info("Would update DNS record", name=dns_record["name"])
             else:
                 update_record_data = {
                     "dns_record_id": cur_dns_records[0].id,
                     **new_record_data,
                 }
                 cf_client.dns.records.update(**update_record_data)
-                LOGGER.info("Updated DNS record", record_name=dns_record["record_name"])
+                LOGGER.info("Updated DNS record", name=dns_record["name"])
         else:
             if is_dry_run:
-                LOGGER.info(
-                    "Would create DNS record", record_name=dns_record["record_name"]
-                )
+                LOGGER.info("Would create DNS record", name=dns_record["name"])
             else:
                 cf_client.dns.records.create(**new_record_data)
-                LOGGER.info("Created DNS record", record_name=dns_record["record_name"])
+                LOGGER.info("Created DNS record", name=dns_record["name"])
 
 
 def apply(
