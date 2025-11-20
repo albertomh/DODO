@@ -103,3 +103,13 @@ class DropletListResponse(TypedDict):
     droplets: list[DropletResponse]
     links: dict
     meta: MetaApiRes
+
+
+class IPAddressForDroplet(TypedDict):
+    """Use in env. blueprints to indirectly point to a Droplet's IP without revealing it.
+
+    When an `IPAddressForDroplet` is detected by `apply.manage_cloudflare_dns()` as the
+    value of a `DNSRecord.content`, this object will be replaced with an IP address.
+    """
+
+    droplet_wkid: UUID

@@ -209,11 +209,13 @@ class TestManageCloudflareDNS:
     def test_manage_cf_dns_update_dry_run(
         self, mock_get_ips, fake_do_client, fake_cf_client, fake_env, capsys
     ):
-        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.0.0.1"}
+        mock_get_ips.return_value = {
+            UUID("11111111-1111-1111-1111-111111111111"): "10.0.0.1"
+        }
 
         zone = MagicMock()
         zone.id = "zone123"
-        fake_cf_client.zones.get.return_value = zone
+        fake_cf_client.zones.list.return_value.result = [zone]
 
         existing_record = MagicMock()
         existing_record.id = "rec999"
@@ -221,13 +223,11 @@ class TestManageCloudflareDNS:
 
         bp = [
             {
-                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
-                "dns_record": {
-                    "zone_id": "zone123",
-                    "type": "A",
-                    "name": "api.example.com",
-                    "proxied": True,
-                },
+                "cf_zone_name": "example.com",
+                "type": "A",
+                "name": "api.example.com",
+                "content": {"droplet_wkid": UUID("11111111-1111-1111-1111-111111111111")},
+                "proxied": True,
             }
         ]
 
@@ -244,11 +244,13 @@ class TestManageCloudflareDNS:
     def test_manage_cf_dns_update(
         self, mock_get_ips, fake_do_client, fake_cf_client, fake_env
     ):
-        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.0.0.2"}
+        mock_get_ips.return_value = {
+            UUID("11111111-1111-1111-1111-111111111111"): "10.0.0.2"
+        }
 
         zone = MagicMock()
         zone.id = "zone123"
-        fake_cf_client.zones.get.return_value = zone
+        fake_cf_client.zones.list.return_value.result = [zone]
 
         existing_record = MagicMock()
         existing_record.id = "rec444"
@@ -256,13 +258,12 @@ class TestManageCloudflareDNS:
 
         bp = [
             {
-                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
-                "dns_record": {
-                    "zone_id": "zone123",
-                    "type": "A",
-                    "name": "web.example.com",
-                    "proxied": False,
-                },
+                "cf_zone_name": "example.com",
+                "type": "A",
+                "name": "web.example.com",
+                "content": {"droplet_wkid": UUID("11111111-1111-1111-1111-111111111111")},
+                "ttl": 300,
+                "proxied": False,
             }
         ]
 
@@ -277,23 +278,23 @@ class TestManageCloudflareDNS:
     def test_manage_cf_dns_create_dry_run(
         self, mock_get_ips, fake_do_client, fake_cf_client, fake_env, capsys
     ):
-        mock_get_ips.return_value = {"11111111-1111-1111-1111-111111111111": "10.1.1.1"}
+        mock_get_ips.return_value = {
+            UUID("11111111-1111-1111-1111-111111111111"): "10.1.1.1"
+        }
 
         zone = MagicMock()
         zone.id = "zone123"
-        fake_cf_client.zones.get.return_value = zone
+        fake_cf_client.zones.list.return_value.result = [zone]
 
         fake_cf_client.dns.records.list.return_value.result = []
 
         bp = [
             {
-                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
-                "dns_record": {
-                    "zone_id": "zone123",
-                    "type": "A",
-                    "name": "db.example.com",
-                    "proxied": True,
-                },
+                "cf_zone_name": "example.com",
+                "type": "A",
+                "name": "db.example.com",
+                "content": {"droplet_wkid": UUID("11111111-1111-1111-1111-111111111111")},
+                "proxied": True,
             }
         ]
 
@@ -310,24 +311,23 @@ class TestManageCloudflareDNS:
         self, mock_get_ips, fake_do_client, fake_cf_client, fake_env
     ):
         mock_get_ips.return_value = {
-            "11111111-1111-1111-1111-111111111111": "192.168.0.5"
+            UUID("11111111-1111-1111-1111-111111111111"): "192.168.0.5"
         }
 
         zone = MagicMock()
         zone.id = "zone123"
-        fake_cf_client.zones.get.return_value = zone
+        fake_cf_client.zones.list.return_value.result = [zone]
 
         fake_cf_client.dns.records.list.return_value.result = []
 
         bp = [
             {
-                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
-                "dns_record": {
-                    "zone_id": "zone123",
-                    "type": "A",
-                    "name": "cache.example.com",
-                    "proxied": False,
-                },
+                "cf_zone_name": "example.com",
+                "type": "A",
+                "name": "cache.example.com",
+                "content": {"droplet_wkid": UUID("11111111-1111-1111-1111-111111111111")},
+                "ttl": 300,
+                "proxied": False,
             }
         ]
 
@@ -345,13 +345,11 @@ class TestManageCloudflareDNS:
 
         bp = [
             {
-                "droplet_wkid": "11111111-1111-1111-1111-111111111111",
-                "dns_record": {
-                    "zone_id": "zone123",
-                    "type": "A",
-                    "name": "lost.example.com",
-                    "proxied": True,
-                },
+                "cf_zone_name": "example.com",
+                "type": "A",
+                "name": "lost.example.com",
+                "content": {"droplet_wkid": UUID("11111111-1111-1111-1111-111111111111")},
+                "proxied": True,
             }
         ]
 
