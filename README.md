@@ -76,16 +76,33 @@ To use `DODO` the following must be available locally:
 - [Python 3.14](https://docs.python.org/3.14/) or above
 - [uv](https://docs.astral.sh/uv/)
 
+## Environment Variables
+
+The following manual configuration is a pre-requisite for DODO to be able to plan and
+create infrastructure:
+
+### Digital Ocean credentials
+
+1. Create a Digital Ocean API token <https://cloud.digitalocean.com/account/api/tokens>
+    1. Set an expiration date
+    2. Set Custom Scopes:
+        - droplet: `create`, `update`, `delete`
+        - ssh_key: `read`
+        - tag: `create`
+2. Set env. var. `DIGITALOCEAN__TOKEN` to the value of the API token.
+
+### Cloudflare credentials
+
+Optionally, if you are using Cloudflare to serve DNS records:
+
+1. Create a Cloudflare API token <https://dash.cloudflare.com/profile/api-tokens>
+    1. Set Permissions:
+        - Zone:Read
+        - DNS:Edit
+    2. Include only the Zone you are targeting.
+2. Set env. var. `CLOUDFLARE__TOKEN` to the value of the API token.
+
 ## Develop
-
-Install the package in editable mode and run the entrypoint:
-
-```sh
-# run from the repository's root directory
-uv venv
-uv pip install -e .
-uv run python -m digitalocean_deployment_orchestrator.main
-```
 
 IPython is available as the default shell. Start an interactive session with:
 
@@ -203,19 +220,13 @@ nox -- -m "not smoke"
 
 See the `tool.pytest.ini_options` table in `pyproject.toml` for a list of all marks.
 
-### Slow tests
-
-Tests with the `@pytest.mark.slow` mark will only be included in test runs happening in a
-CI pipeline. This behaviour is configured in `conftest.py`, where you can add more marks
-that should be treated similarly.
-
 ### Python versions & coverage
 
 Nox is used to automate testing across different Python versions. Test sessions are
 configured via `noxfile.py`. `coverage` reporting will only run for test runs for the
 oldest and latest Python versions.
 
-## Tests in GitHub Actions
+### Tests in GitHub Actions
 
 A matrix strategy is used for the `test` GitHub Action. This runs each Nox session
 (i.e. Python version test run) as a separate pipeline job.
@@ -266,15 +277,15 @@ To use DODO as a dependency in a project:
 
 ```sh
 # add the following line to the dependencies table in `pyproject.toml`:
-# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
+"digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
 
 uv sync
 ```
 
-Or simply run modules directly once installed as a dependency:
+Run modules directly once installed as a dependency:
 
 ```sh
-uv run python -m digitalocean_deployment_orchestrator.main
+uv run python -m digitalocean_deployment_orchestrator.list_droplet_IPs $ENV_NAME
 ```
 
 ---
