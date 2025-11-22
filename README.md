@@ -14,29 +14,59 @@
 
 A Python package to
 
-- define infrastructure on Digital Ocean
-- create said infrastructure
-- manage webapp blue/green deployments
+- write declarative plans for Digital Ocean infrastructure in plain Python
+- programmatically create infrastructure following those plans
+- manage blue/green deployments of containerised webapps
+
+With extensions to
+
+- manage DNS records via Cloudflare
+
+Designed to
+
+- easily fit into a CI/CD environment such as GitHub Actions
+
+While avoiding the complexity, pitfalls and overextension of tools like Terraform.
 
 ## Quickstart
 
 ```sh
-# add the following line to the dependencies table in `pyproject.toml`:
-# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/v0.1.0/digitalocean_deployment_orchestrator-0.1.0-py3-none-any.whl"
+# in your Python project, add the following to the dependencies table in `pyproject.toml`
+"digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/v0.4.0/digitalocean_deployment_orchestrator-0.4.0-py3-none-any.whl"
 
-# create a blueprint for a 'test' environment:
-cp infra/env_blueprints/_sample.py.txt infra/env_blueprints/test.py
-# edit the contents of the test.py blueprint ...
+# create a blueprint for a 'test' environment
+cp DODO/docs/demo/env_blueprints/_sample.py.txt myapp/infra/env_blueprints/test.py
+# edit the contents of the `test.py` blueprint ...
 
-uv venv
-uv pip install -e .
+# prepare your local environment
+uv sync
 export DIGITALOCEAN__TOKEN=dop_v1_123...
-uv run python -m DO_deploy.infra.apply test [--no-dry-run]
 
-# upload the deployment module to the newly created Droplet(s)
-uv run python -m DO_deploy.upload_deployment_script test admin
-# deploy the webapp following the blue/green strategy
-ssh admin@$dropletIP -t 'cd /etc/webapp/; uv run python -m DO_deploy.deploy.blue_green_deploy -u ghuser -t $GH_PAT -i ghuser/webapp:latest -n webapp'
+# plan & create infrastructure for the 'test' environment
+uv run python \
+    -m digitalocean_deployment_orchestrator.infra.apply \
+    $(pwd)/env_blueprints \
+    test [--no-dry-run]
+
+# perform a blue/green deployment in each droplet in the 'test' environment
+uv run python -m digitalocean_deployment_orchestrator.list_droplet_IPs test | \
+    xargs -r -n1 -I{} bash -c '
+    IP="{}"
+    ssh -o StrictHostKeyChecking=no admin@"$IP" "
+        sudo mkdir -p /etc/myapp/_deploy/ &&
+        sudo chown admin:admin /etc/myapp/_deploy/
+    " &&
+    scp -o StrictHostKeyChecking=no pyproject.toml .env admin@"$IP":/etc/myapp/_deploy/ &&
+    ssh -t admin@"$IP" "
+        cd /etc/myapp/_deploy/ &&
+        uv run python -m digitalocean_deployment_orchestrator.deploy.blue_green_deploy \
+        --image 'githubuser/myapp:latest' \
+        --ghcr-username 'githubuser' \
+        --gh-pat 'github_pat_123...' \
+        --name 'myapp' \
+        --env-file '/etc/myapp/_deploy/.env'
+    "
+'
 ```
 
 ## Prerequisites
@@ -46,16 +76,58 @@ To use `DODO` the following must be available locally:
 - [Python 3.14](https://docs.python.org/3.14/) or above
 - [uv](https://docs.astral.sh/uv/)
 
+## Environment Variables
+
+The following manual configuration is a pre-requisite for `DODO` to be able to plan and
+create infrastructure:
+
+### Digital Ocean credentials
+
+1. Create a Digital Ocean API token <https://cloud.digitalocean.com/account/api/tokens>
+    1. Set an expiration date
+    2. Set Custom Scopes:
+        - droplet: `create`, `update`, `delete`
+        - ssh_key: `read`
+        - tag: `create`
+2. Set env. var. `DIGITALOCEAN__TOKEN` to the value of the API token.
+
+### Cloudflare credentials
+
+Optionally, if you are using Cloudflare to serve DNS records:
+
+1. Create a Cloudflare API token <https://dash.cloudflare.com/profile/api-tokens>
+    1. Set Permissions:
+        - Zone:Read
+        - DNS:Edit
+    2. Include only the Zone you are targeting.
+2. Set env. var. `CLOUDFLARE__TOKEN` to the value of the API token.
+
+## Create and use environment blueprints
+
+`DODO` revolves around creating 'environment blueprints' that declaratively define
+resources for a given environment. These blueprints are plain Python modules that import
+classes from `digitalocean_deployment_orchestrator` and combine them to create your
+infrastructure.
+
+Most of the building blocks `DODO` provides are `TypedDict`s and `Enum`s, meaning they
+pair well with type checks and IDE code completion.
+
+The expected use is to create a 'blueprints' directory and pass this as an argument when
+calling `digitalocean_deployment_orchestrator.infra.apply`.  
+This blueprints directory will contain one or more Python modules, named after the
+[environment](src/digitalocean_deployment_orchestrator/types.py#L56) they define, eg. `test.py`.
+
+The only requirement for writing a blueprint module is that it must contain a top-level
+attribute called `BLUEPRINT` which must be an [`EnvironmentBlueprint`](src/digitalocean_deployment_orchestrator/infra/types.py#L9)
+object. Construct a full environment by following the breadcrumb trail of fields & types
+cascading from that initial `BLUEPRINT` object.
+
+The file at `docs/demo/env_blueprints/_sample.py.txt` provides a starting point for your
+first environment blueprint.
+
+### Digital Ocean Droplets
+
 ## Develop
-
-Install the package in editable mode and run the entrypoint:
-
-```sh
-# run from the repository's root directory
-uv venv
-uv pip install -e .
-uv run python -m digitalocean_deployment_orchestrator.main
-```
 
 IPython is available as the default shell. Start an interactive session with:
 
@@ -173,19 +245,13 @@ nox -- -m "not smoke"
 
 See the `tool.pytest.ini_options` table in `pyproject.toml` for a list of all marks.
 
-### Slow tests
-
-Tests with the `@pytest.mark.slow` mark will only be included in test runs happening in a
-CI pipeline. This behaviour is configured in `conftest.py`, where you can add more marks
-that should be treated similarly.
-
 ### Python versions & coverage
 
 Nox is used to automate testing across different Python versions. Test sessions are
 configured via `noxfile.py`. `coverage` reporting will only run for test runs for the
 oldest and latest Python versions.
 
-## Tests in GitHub Actions
+### Tests in GitHub Actions
 
 A matrix strategy is used for the `test` GitHub Action. This runs each Nox session
 (i.e. Python version test run) as a separate pipeline job.
@@ -217,7 +283,7 @@ For more information, consult the [release-please-action project](https://github
 
 ## Build & package
 
-DODO uses the hatchling build system and the `uv` toolchain to package releases. Build a
+`DODO` uses the hatchling build system and the `uv` toolchain to package releases. Build a
 release by:
 
 ```sh
@@ -232,19 +298,19 @@ uv build
 # <https://github.com/albertomh/DODO/releases/tag/vM.m.p>
 ```
 
-To use DODO as a dependency in a project:
+To use `DODO` as a dependency in a project:
 
 ```sh
 # add the following line to the dependencies table in `pyproject.toml`:
-# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
+"digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
 
 uv sync
 ```
 
-Or simply run modules directly once installed as a dependency:
+Run modules directly once installed as a dependency:
 
 ```sh
-uv run python -m digitalocean_deployment_orchestrator.main
+uv run python -m digitalocean_deployment_orchestrator.list_droplet_IPs $ENV_NAME
 ```
 
 ---
