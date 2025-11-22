@@ -14,29 +14,59 @@
 
 A Python package to
 
-- define infrastructure on Digital Ocean
-- create said infrastructure
-- manage webapp blue/green deployments
+- write declarative plans for infrastructure on Digital Ocean
+- create infrastructure from those plans
+- manage blue/green deployments of containerised webapps
+
+With extensions to
+
+- manage DNS records via Cloudflare
+
+Designed to
+
+- easily fit into a CI/CD environment such as GitHub Actions
+
+While avoiding the complexity, pitfalls and overextension of tools like Terraform.
 
 ## Quickstart
 
 ```sh
-# add the following line to the dependencies table in `pyproject.toml`:
-# "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/v0.1.0/digitalocean_deployment_orchestrator-0.1.0-py3-none-any.whl"
+# in your Python project, add the following to the dependencies table in `pyproject.toml`
+"digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/v0.4.0/digitalocean_deployment_orchestrator-0.4.0-py3-none-any.whl"
 
-# create a blueprint for a 'test' environment:
-cp infra/env_blueprints/_sample.py.txt infra/env_blueprints/test.py
-# edit the contents of the test.py blueprint ...
+# create a blueprint for a 'test' environment
+cp DODO/docs/demo/env_blueprints/_sample.py.txt myapp/infra/env_blueprints/test.py
+# edit the contents of the `test.py` blueprint ...
 
-uv venv
-uv pip install -e .
+# prepare your local environment
+uv sync
 export DIGITALOCEAN__TOKEN=dop_v1_123...
-uv run python -m DO_deploy.infra.apply test [--no-dry-run]
 
-# upload the deployment module to the newly created Droplet(s)
-uv run python -m DO_deploy.upload_deployment_script test admin
-# deploy the webapp following the blue/green strategy
-ssh admin@$dropletIP -t 'cd /etc/webapp/; uv run python -m DO_deploy.deploy.blue_green_deploy -u ghuser -t $GH_PAT -i ghuser/webapp:latest -n webapp'
+# plan & create infrastructure for the 'test' environment
+uv run python \
+    -m digitalocean_deployment_orchestrator.infra.apply \
+    $(pwd)/env_blueprints \
+    test [--no-dry-run]
+
+# perform a blue/green deployment in each droplet in the 'test' environment
+uv run python -m digitalocean_deployment_orchestrator.list_droplet_IPs test | \
+    xargs -r -n1 -I{} bash -c '
+    IP="{}"
+    ssh -o StrictHostKeyChecking=no admin@"$IP" "
+        sudo mkdir -p /etc/myapp/_deploy/ &&
+        sudo chown admin:admin /etc/myapp/_deploy/
+    " &&
+    scp -o StrictHostKeyChecking=no pyproject.toml .env admin@"$IP":/etc/myapp/_deploy/ &&
+    ssh -t admin@"$IP" "
+        cd /etc/myapp/_deploy/ &&
+        uv run python -m digitalocean_deployment_orchestrator.deploy.blue_green_deploy \
+        --image 'githubuser/myapp:latest' \
+        --ghcr-username 'githubuser' \
+        --gh-pat 'github_pat_123...' \
+        --name 'myapp' \
+        --env-file '/etc/myapp/_deploy/.env'
+    "
+'
 ```
 
 ## Prerequisites
