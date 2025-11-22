@@ -14,8 +14,8 @@
 
 A Python package to
 
-- write declarative plans for infrastructure on Digital Ocean
-- create infrastructure from those plans
+- write declarative plans for Digital Ocean infrastructure in plain Python
+- programmatically create infrastructure following those plans
 - manage blue/green deployments of containerised webapps
 
 With extensions to
@@ -78,7 +78,7 @@ To use `DODO` the following must be available locally:
 
 ## Environment Variables
 
-The following manual configuration is a pre-requisite for DODO to be able to plan and
+The following manual configuration is a pre-requisite for `DODO` to be able to plan and
 create infrastructure:
 
 ### Digital Ocean credentials
@@ -101,6 +101,31 @@ Optionally, if you are using Cloudflare to serve DNS records:
         - DNS:Edit
     2. Include only the Zone you are targeting.
 2. Set env. var. `CLOUDFLARE__TOKEN` to the value of the API token.
+
+## Create and use environment blueprints
+
+`DODO` revolves around creating 'environment blueprints' that declaratively define
+resources for a given environment. These blueprints are plain Python modules that import
+classes from `digitalocean_deployment_orchestrator` and combine them to create your
+infrastructure.
+
+Most of the building blocks `DODO` provides are `TypedDict`s and `Enum`s, meaning they
+pair well with type checks and IDE code completion.
+
+The expected use is to create a 'blueprints' directory and pass this as an argument when
+calling `digitalocean_deployment_orchestrator.infra.apply`.  
+This blueprints directory will contain one or more Python modules, named after the
+[environment](src/digitalocean_deployment_orchestrator/types.py#L56) they define, eg. `test.py`.
+
+The only requirement for writing a blueprint module is that it must contain a top-level
+attribute called `BLUEPRINT` which must be an [`EnvironmentBlueprint`](src/digitalocean_deployment_orchestrator/infra/types.py#L9)
+object. Construct a full environment by following the breadcrumb trail of fields & types
+cascading from that initial `BLUEPRINT` object.
+
+The file at `docs/demo/env_blueprints/_sample.py.txt` provides a starting point for your
+first environment blueprint.
+
+### Digital Ocean Droplets
 
 ## Develop
 
@@ -258,7 +283,7 @@ For more information, consult the [release-please-action project](https://github
 
 ## Build & package
 
-DODO uses the hatchling build system and the `uv` toolchain to package releases. Build a
+`DODO` uses the hatchling build system and the `uv` toolchain to package releases. Build a
 release by:
 
 ```sh
@@ -273,7 +298,7 @@ uv build
 # <https://github.com/albertomh/DODO/releases/tag/vM.m.p>
 ```
 
-To use DODO as a dependency in a project:
+To use `DODO` as a dependency in a project:
 
 ```sh
 # add the following line to the dependencies table in `pyproject.toml`:
