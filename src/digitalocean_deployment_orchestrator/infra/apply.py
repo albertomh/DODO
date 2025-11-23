@@ -202,30 +202,37 @@ def manage_cloudflare_dns(
     env: Environment,
     blueprint_dns_records: list[DNSRecord],
 ):
+    # { zone_name: zone_id } eg. { 'example.com': '12ab...0789' }
+    zone_cache: dict[str, str] = {}
+
     for dns in blueprint_dns_records:
         dns_content = dns.get("content")
         if isinstance(dns_content, Mapping) and "droplet_wkid" in dns_content:
             # handle when dns_content is an `IPAddressForDroplet` TypedDict
             droplet_ips_for_env = get_droplet_ips_for_env(do_client, env)
             wkid = dns_content["droplet_wkid"]
-
             if wkid not in droplet_ips_for_env:
                 LOGGER.warning(
                     "Could not match wkid to running droplet",
                     droplet_wkid=str(wkid),
                 )
                 continue
-
             dns["content"] = droplet_ips_for_env[wkid]
 
-        try:
-            zone: Zone = cf_client.zones.list(name=dns["cf_zone_name"]).result[0]
-            err_msg = f"Zone {dns['cf_zone_name']} not found in Cloudflare"
-        except IndexError:
-            raise RuntimeError(err_msg) from None
-        if not zone:
-            raise RuntimeError(err_msg)
-        zone_id = zone.id
+        cf_zone_name = dns["cf_zone_name"]
+
+        if cf_zone_name not in zone_cache:
+            try:
+                zone: Zone = cf_client.zones.list(name=cf_zone_name).result[0]
+            except IndexError:
+                err_msg = f"Zone {cf_zone_name} not found in Cloudflare"
+                raise RuntimeError(err_msg) from None
+            if not zone:
+                err_msg = f"Zone {cf_zone_name} not found in Cloudflare"
+                raise RuntimeError(err_msg)
+            zone_cache[cf_zone_name] = zone.id
+
+        zone_id = zone_cache[cf_zone_name]
 
         cur_dns_records: list[
             ARecord
@@ -254,20 +261,20 @@ def manage_cloudflare_dns(
 
         if cur_dns_records:
             if is_dry_run:
-                LOGGER.info("Would update DNS record", name=dns["name"])
+                LOGGER.info("Would update DNS record", name=dns["name"], type=dns["type"])
             else:
                 update_record_data = {
                     "dns_record_id": cur_dns_records[0].id,
                     **new_record_data,
                 }
                 cf_client.dns.records.update(**update_record_data)
-                LOGGER.info("Updated DNS record", name=dns["name"])
+                LOGGER.info("Updated DNS record", name=dns["name"], type=dns["type"])
         else:
             if is_dry_run:
-                LOGGER.info("Would create DNS record", name=dns["name"])
+                LOGGER.info("Would create DNS record", name=dns["name"], type=dns["type"])
             else:
                 cf_client.dns.records.create(**new_record_data)
-                LOGGER.info("Created DNS record", name=dns["name"])
+                LOGGER.info("Created DNS record", name=dns["name"], type=dns["type"])
 
 
 def apply(
