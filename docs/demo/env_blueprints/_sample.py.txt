@@ -57,4 +57,20 @@ BLUEPRINT = EnvironmentBlueprint(
            well_known_uuid=WELL_KNOWN_UUIDS.DB_1.value,
         ),
     ],
+    dns=[
+        DNSRecord(
+            cf_zone_name="mydomain.com",
+            type="A",
+            name="@",
+            content=IPAddressForDroplet(droplet_wkid=WELL_KNOWN_UUIDS.APP_1.value),
+            proxied=True,
+        ),
+        DNSRecord(
+            cf_zone_name="mydomain.com",
+            type="CNAME",
+            name="www",
+            content="mydomain.com",
+            proxied=True,
+        ),
+    ],
 )
