@@ -204,6 +204,20 @@ def manage_cloudflare_dns(
 ):
     # { zone_name: zone_id } eg. { 'example.com': '12ab...0789' }
     zone_cache: dict[str, str] = {}
+    # { zone_id: list of DNS records }
+    zone_records_cache: dict[
+        str,
+        list[
+            ARecord
+            | AAAARecord
+            | CNAMERecord
+            | MXRecord
+            | TXTRecord
+            | NSRecord
+            | SRVRecordParam
+            | PTRRecord
+        ],
+    ] = {}
 
     for dns in blueprint_dns_records:
         dns_content = dns.get("content")
@@ -220,7 +234,6 @@ def manage_cloudflare_dns(
             dns["content"] = droplet_ips_for_env[wkid]
 
         cf_zone_name = dns["cf_zone_name"]
-
         if cf_zone_name not in zone_cache:
             try:
                 zone: Zone = cf_client.zones.list(name=cf_zone_name).result[0]
@@ -234,20 +247,17 @@ def manage_cloudflare_dns(
 
         zone_id = zone_cache[cf_zone_name]
 
-        cur_dns_records: list[
-            ARecord
-            | AAAARecord
-            | CNAMERecord
-            | MXRecord
-            | TXTRecord
-            | NSRecord
-            | SRVRecordParam
-            | PTRRecord
-        ] = cf_client.dns.records.list(
-            zone_id=zone_id,
-            name=dns["name"],
-            type=dns["type"],
-        ).result
+        if zone_id not in zone_records_cache:
+            zone_records_cache[zone_id] = cf_client.dns.records.list(
+                zone_id=zone_id
+            ).result
+
+        fqdn = cf_zone_name if dns["name"] == "@" else f"{dns['name']}.{cf_zone_name}"
+        cur_dns_records = [
+            record
+            for record in zone_records_cache[zone_id]
+            if record.name == fqdn and record.type == dns["type"]
+        ]
 
         new_record_data = {
             "zone_id": zone_id,
