@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.0](https://github.com/albertomh/DODO/compare/v0.3.1...v0.4.0) (2025-11-24)
+
+
+### Features
+
+* Add Cloudflare-related headers to nginx conf ([#26](https://github.com/albertomh/DODO/issues/26)) ([25771ee](https://github.com/albertomh/DODO/commit/25771ee4fd74942237bbf7fc6639880d98d3c52b))
+* Allow additional types of DNS record in blueprints ([#28](https://github.com/albertomh/DODO/issues/28)) ([d8dfeb8](https://github.com/albertomh/DODO/commit/d8dfeb8671e9c969a59e9e0c188f258cc81479c9))
+* Cache DNS records per-Zone in Cloudflare management code ([#34](https://github.com/albertomh/DODO/issues/34)) ([2ccfb3e](https://github.com/albertomh/DODO/commit/2ccfb3e6ace71303e206faf1c1497228203c1b47))
+* Cache Zone lookup in Cloudflare management code ([#31](https://github.com/albertomh/DODO/issues/31)) ([3633496](https://github.com/albertomh/DODO/commit/3633496ed54d1affdfa0b0a9e9d13eca8e5e92cd))
+* Manage Cloudflare DNS records via infra.apply module ([#23](https://github.com/albertomh/DODO/issues/23)) ([65bfe74](https://github.com/albertomh/DODO/commit/65bfe749615a7c4b7583650c34fa7096820403b8))
+* Set DNS record types via env. blueprints ([#27](https://github.com/albertomh/DODO/issues/27)) ([4fffb1e](https://github.com/albertomh/DODO/commit/4fffb1eaa7e4c5e30113e66071bde447b691d1c2))
+
+
+### Dependencies
+
+* Add 'cloudflare' package ([#22](https://github.com/albertomh/DODO/issues/22)) ([fe9f05f](https://github.com/albertomh/DODO/commit/fe9f05f9476f6382c1e77e9150e91742ac964a02))
+* Upgrade to pydo&gt;=0.21.0 ([#25](https://github.com/albertomh/DODO/issues/25)) ([3b18a5c](https://github.com/albertomh/DODO/commit/3b18a5c791eb1b6f89629bbcb72fc94b4b7befac))
+* Upgrade to pytest&gt;=9.0.0 ([#24](https://github.com/albertomh/DODO/issues/24)) ([5f84f80](https://github.com/albertomh/DODO/commit/5f84f80cf97fdb7c51c929e3b08d47bdc49befe7))
+
+
+### Documentation
+
+* Add cloud-config template samples for app, postgres servers ([#17](https://github.com/albertomh/DODO/issues/17)) ([dee8084](https://github.com/albertomh/DODO/commit/dee80849a40d8cd558c6e42368e77508fb000639))
+* Add env. blueprint sample with app + db droplets ([#19](https://github.com/albertomh/DODO/issues/19)) ([a64322a](https://github.com/albertomh/DODO/commit/a64322afce8eb0e3dfb358a1f355f47bcdc55e90))
+* Update README intro + quickstart steps ([#30](https://github.com/albertomh/DODO/issues/30)) ([50ede87](https://github.com/albertomh/DODO/commit/50ede87454104cbb653507857f0b6772d4fec4c6))
+
 ## [0.3.1](https://github.com/albertomh/DODO/compare/v0.3.0...v0.3.1) (2025-11-09)
 
 
