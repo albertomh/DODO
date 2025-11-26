@@ -69,6 +69,62 @@ class TestGetDropletIPsForEnv:
         result = get_droplet_ips_for_env(fake_client, Environment.TEST)
         assert result == {}
 
+    @patch("digitalocean_deployment_orchestrator.list_droplet_IPs.get_public_ip")
+    @patch("digitalocean_deployment_orchestrator.list_droplet_IPs.get_wkid_from_tags")
+    def test_filter_required_tags_excludes(
+        self, mock_get_wkid_from_tags, mock_get_public_ip, fake_client
+    ):
+        required = {"extra:needed"}
+
+        mock_get_wkid_from_tags.return_value = UUID(
+            "11111111-1111-1111-1111-111111111111"
+        )
+        mock_get_public_ip.return_value = "1.2.3.4"
+
+        result = get_droplet_ips_for_env(
+            fake_client, Environment.TEST, required_tags=required
+        )
+
+        assert result == {}
+        mock_get_wkid_from_tags.assert_not_called()
+        mock_get_public_ip.assert_not_called()
+
+    @patch("digitalocean_deployment_orchestrator.list_droplet_IPs.get_public_ip")
+    @patch("digitalocean_deployment_orchestrator.list_droplet_IPs.get_wkid_from_tags")
+    def test_filter_required_tags_includes_matching(
+        self, mock_get_wkid_from_tags, mock_get_public_ip, fake_client
+    ):
+        fake_client.droplets.list.return_value = {
+            "droplets": [
+                {
+                    "id": 1,
+                    "name": "droplet-1",
+                    "tags": [
+                        "wkid:11111111-1111-1111-1111-111111111111",
+                        "role:web",
+                    ],
+                    "networks": {"v4": [{"ip_address": "10.0.0.1"}]},
+                },
+                {
+                    "id": 2,
+                    "name": "droplet-2",
+                    "tags": ["wkid:222...", "role:db"],
+                    "networks": {"v4": [{"ip_address": "10.0.0.2"}]},
+                },
+            ]
+        }
+
+        mock_get_wkid_from_tags.side_effect = [
+            UUID("11111111-1111-1111-1111-111111111111")
+        ]
+        mock_get_public_ip.side_effect = ["10.0.0.1"]
+
+        result = get_droplet_ips_for_env(
+            fake_client, Environment.TEST, required_tags={"role:web"}
+        )
+
+        assert result == {UUID("11111111-1111-1111-1111-111111111111"): "10.0.0.1"}
+
 
 class TestMain:
     @patch("builtins.print")
@@ -85,5 +141,7 @@ class TestMain:
 
         mock_print.assert_called_once_with("192.168.0.1")
         mock_get_droplet_ips_for_env.assert_called_once_with(
-            fake_client, Environment.TEST
+            fake_client,
+            Environment.TEST,
+            required_tags=None,
         )
