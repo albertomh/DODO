@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/albertomh/DODO/compare/v0.4.0...v0.5.0) (2025-11-26)
+
+
+### Features
+
+* Filter droplets by tag in list_droplet_IPs ([#36](https://github.com/albertomh/DODO/issues/36)) ([8911f87](https://github.com/albertomh/DODO/commit/8911f87157e4ef0e5e2d5a83c1b46e1a7921da8e))
+
 ## [0.4.0](https://github.com/albertomh/DODO/compare/v0.3.1...v0.4.0) (2025-11-24)
 
 
