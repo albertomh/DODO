@@ -283,8 +283,8 @@ For more information, consult the [release-please-action project](https://github
 
 ## Build & package
 
-`DODO` uses the hatchling build system and the `uv` toolchain to package releases. Build a
-release by:
+`DODO` uses the [hatchling build system](https://pypi.org/project/hatchling/) and the `uv`
+toolchain to package releases. Build a release by:
 
 ```sh
 # merge a release-please PR to create a tag and a GitHub Release
@@ -294,7 +294,7 @@ release by:
 # in this project's root directory
 uv build
 
-# upload the artefacts as an asset linked to the release
+# upload the artefacts as an asset linked to the release at
 # <https://github.com/albertomh/DODO/releases/tag/vM.m.p>
 ```
 
@@ -304,6 +304,7 @@ To use `DODO` as a dependency in a project:
 # add the following line to the dependencies table in `pyproject.toml`:
 "digitalocean_deployment_orchestrator @ https://github.com/albertomh/DODO/releases/download/vM.m.p/digitalocean_deployment_orchestrator-M.m.p-py3-none-any.whl"
 
+# update the project's environment
 uv sync
 ```
 
