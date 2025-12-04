@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0](https://github.com/albertomh/DODO/compare/v0.4.0...v0.5.0) (2025-12-04)
+
+
+### Features
+
+* Filter droplets by tag in list_droplet_IPs ([#36](https://github.com/albertomh/DODO/issues/36)) ([8911f87](https://github.com/albertomh/DODO/commit/8911f87157e4ef0e5e2d5a83c1b46e1a7921da8e))
+
+
+### Dependencies
+
+* Minor version bumps for Python deps & pre-commit hooks ([#40](https://github.com/albertomh/DODO/issues/40)) ([6ee8a66](https://github.com/albertomh/DODO/commit/6ee8a66d77add0a808247c8a4d4a54d41a56b0db))
+
+
+### Documentation
+
+* Add tags, ssh keys to sample env. blueprint ([#39](https://github.com/albertomh/DODO/issues/39)) ([7250f16](https://github.com/albertomh/DODO/commit/7250f1658cc326e77fd0cbcf0127872dca7256cb))
+
 ## [0.4.0](https://github.com/albertomh/DODO/compare/v0.3.1...v0.4.0) (2025-11-24)
 
 
